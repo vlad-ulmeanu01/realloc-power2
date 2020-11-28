@@ -22,11 +22,11 @@ typedef struct smart {
   void (*push)(struct smart*, int);
 } smart;
 
-int local_size (smart* s) {
+int smart_size (smart* s) {
   return s->sz;
 }
 
-void local_push (smart* s, int val) {
+void smart_push (smart* s, int val) {
   if (s->sz >= s->sm) {
     if (s->sm > 0) {
       s->sm *= 2;
@@ -41,15 +41,15 @@ void local_push (smart* s, int val) {
   s->ptr[s->sz++] = val;
 }
 
-void init (smart* s) {
+void smart_init (smart* s) {
   s->sz = 0;
   s->sm = 0;
-  s->size = local_size;
-  s->push = local_push;
+  s->size = smart_size;
+  s->push = smart_push;
 }
 
 int main() {
-  smart v; init(&v);
+  smart v; smart_init(&v);
   int n; scanf("%d", &n);
   int i, j, z;
   for (i = 0; i < n; i++) {
