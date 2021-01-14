@@ -5,42 +5,42 @@
 #define name(x) (#x)
 
 void check_ptr(void *p, char *s) {
-	if (!p) {
+  if (!p) {
     fprintf(stderr, "bad alloc: %s\n", s);
     exit(-1);
-	}
+  }
 }
 
 typedef struct smart {
-	void *ptr;
-	int sz, sm; ///sm = size max
-	size_t chk; ///marime o bucata: sizeof(char/short...)
+  void *ptr;
+  int sz, sm; ///sm = size max
+  size_t chk; ///marime o bucata: sizeof(char/short...)
 } smart;
 
 int smart_size(smart *s) {
-	return s->sz;
+  return s->sz;
 }
 
 void smart_push(smart *s, ...) {
   if (s->chk != 1 && s->chk != 2 && s->chk != 4 && s->chk != 8)
     s->chk = 1;
 
-	if (s->sz >= s->sm) {
-		if (s->sm > 0) {
-			s->sm <<= 1;
-			s->ptr = (void *)realloc(s->ptr, s->sm * s->chk);
-			check_ptr(s->ptr, name(s->ptr));
+  if (s->sz >= s->sm) {
+    if (s->sm > 0) {
+      s->sm <<= 1;
+      s->ptr = (void *)realloc(s->ptr, s->sm * s->chk);
+      check_ptr(s->ptr, name(s->ptr));
 
-			memset((char *)s->ptr + (s->sm >> 1) * s->chk, 0, (s->sm >> 1) * s->chk);
-		} else {
-			s->sm = 1;
-			s->ptr = (void *)calloc(1, s->chk);
-			check_ptr(s->ptr, name(s->ptr));
-		}
-	}
+      memset((char *)s->ptr + (s->sm >> 1) * s->chk, 0, (s->sm >> 1) * s->chk);
+    } else {
+      s->sm = 1;
+      s->ptr = (void *)calloc(1, s->chk);
+      check_ptr(s->ptr, name(s->ptr));
+    }
+  }
 
-	va_list ap;
-	va_start(ap, s);
+  va_list ap;
+  va_start(ap, s);
 
   switch(s->chk) {
   case 1: ((char *)s->ptr)[s->sz] = (char) va_arg(ap, int); break;
@@ -55,20 +55,20 @@ void smart_push(smart *s, ...) {
 }
 
 void smart_init(smart *s, size_t newchk) {
-	s->sz = 0;
-	s->sm = 0;
-	s->ptr = NULL;
+  s->sz = 0;
+  s->sm = 0;
+  s->ptr = NULL;
   s->chk = newchk;
 }
 
 void smart_clear(smart *s) {
-	if (s->sm != 0 || s->sz != 0 || s->ptr) {
-		if (s->ptr)
-			free(s->ptr);
-		s->sz = 0;
-		s->sm = 0;
-		s->ptr = NULL;
-	}
+  if (s->sm != 0 || s->sz != 0 || s->ptr) {
+    if (s->ptr)
+      free(s->ptr);
+    s->sz = 0;
+    s->sm = 0;
+    s->ptr = NULL;
+  }
 }
 
 int main () {
