@@ -11,6 +11,13 @@ void check_ptr(void *p, char *s) {
   }
 }
 
+typedef union smartunion {
+  char C;
+  short S;
+  int I;
+  long long L;
+} smartunion;
+
 typedef struct smart {
   void *ptr;
   int sz, sm; ///sm = size max
@@ -54,6 +61,60 @@ void smart_push(smart *s, ...) {
   va_end(ap);
 }
 
+void smart_set (smart *s, int ind, ...) {
+  if (s->sz == 0)
+    return;
+
+  if (ind < 0) ind += ((-ind) / s->sz + 1) * s->sz;
+  if (ind >= s->sz) ind %= s->sz;
+
+  va_list ap;
+  va_start(ap, ind);
+
+  switch(s->chk) {
+  case 1: ((char *)s->ptr)[ind] = (char) va_arg(ap, int); break;
+  case 2: ((short *)s->ptr)[ind] = (short) va_arg(ap, int); break;
+  case 4: ((int *)s->ptr)[ind] = (int) va_arg(ap, int); break;
+  case 8: ((long long *)s->ptr)[ind] = (long long) va_arg(ap, long long); break;
+  default: break;
+  }
+
+  va_end(ap);
+}
+
+smartunion smart_get(smart *s, int ind) {
+  smartunion ans;
+  if (s->sz == 0) {
+    ans.C = 0;
+    return ans;
+  }
+
+  if (ind < 0) ind += ((-ind) / s->sz + 1) * s->sz;
+  if (ind >= s->sz) ind %= s->sz;
+
+  switch(s->chk) {
+  case 1: ans.C = ((char *)s->ptr)[ind]; break;
+  case 2: ans.S = ((short *)s->ptr)[ind]; break;
+  case 4: ans.I = ((int *)s->ptr)[ind]; break;
+  case 8: ans.L = ((long long *)s->ptr)[ind]; break;
+  default: ans.C = 0; break;
+  }
+  return ans;
+}
+
+void smart_pop (smart *s) {
+  if (s->sz <= 0)
+    return;
+  switch(s->chk) {
+  case 1: ((char *)s->ptr)[s->sz] = 0; break;
+  case 2: ((short *)s->ptr)[s->sz] = 0; break;
+  case 4: ((int *)s->ptr)[s->sz] = 0; break;
+  case 8: ((long long *)s->ptr)[s->sz] = 0; break;
+  default: break;
+  }
+  s->sz--;
+}
+
 void smart_init(smart *s, size_t newchk) {
   s->sz = 0;
   s->sm = 0;
@@ -82,7 +143,7 @@ int main () {
     smart_push(&s, z);
   }
   for (i = 0; i < smart_size(&s); i++)
-    printf("%d: %d\n", i, ((int *)s.ptr)[i]);
+    printf("%d: %d\n", i, smart_get(&s, i).I);
 
   smart t;
   smart_init(&t, sizeof(char));
@@ -109,8 +170,17 @@ int main () {
     smart_push(&sl, x);
   }
 
+  printf("%lld\n", smart_get(&sl, -1).L);
+  smart_pop(&sl);
+  smart_pop(&sl);
+
+  printf("%lld\n", smart_get(&sl, -2).L);
+  smart_push(&sl, 999LL);
+
+  smart_set(&sl, -1, 998LL);
+
   for (i = 0; i < smart_size(&sl); i++)
-    printf("%lld\n", ((long long *)sl.ptr)[i]);
+    printf("%lld\n", smart_get(&sl, i).L);
 
   smart_clear(&s);
   smart_clear(&t);
